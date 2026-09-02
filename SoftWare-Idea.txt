@@ -1,0 +1,7 @@
+Software Idea.
+
+I want to make a stat tracker for a game I play alot. Brawl Stars. A mobile 3v3 game with a bunch of different gamemodes, events, and etc. Players can progress alone, or with clubmates, and friends.
+ The main stat of the game is wins & losses. 
+The sub stats can include average wins, wins per day, losses per day, etc. Im thinking I can go as far as making summaries per month. Stats can also go towards skins owned, characters(brawlers) owned, resources owned, etc. The game also has a prestige system so listing out ranks, ranked games, prestiges brawlers, etc.
+
+The main reason I chose this was because I've seen a lot of stat trackers for games I play and I've always wondered how they get your stats. I found out they use official APIs from the games to track/scan those stats and shwcase them in some kind of app or website. I'd like to practice using API's since gaming is one of the things im interested in.
