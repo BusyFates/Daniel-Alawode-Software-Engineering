@@ -5,3 +5,11 @@ I want to make a stat tracker for a game I play alot. Brawl Stars. A mobile 3v3 
 The sub stats can include average wins, wins per day, losses per day, etc. Im thinking I can go as far as making summaries per month. Stats can also go towards skins owned, characters(brawlers) owned, resources owned, etc. The game also has a prestige system so listing out ranks, ranked games, prestiges brawlers, etc.
 
 The main reason I chose this was because I've seen a lot of stat trackers for games I play and I've always wondered how they get your stats. I found out they use official APIs from the games to track/scan those stats and shwcase them in some kind of app or website. I'd like to practice using API's since gaming is one of the things im interested in.
+
+So whie I was researching I've heard there a method called "Screen scraping and overlays". It entails using platforms like OverWolf Appstore to render live graphical overlays and capture real-time visual or memory states while a game runs.
+
+There are backend databases where raw data feeds are sent to cloud servers or local databases, where code normalizes the numbers into clear metric, averages and progress charts. 
+
+The main practice will involve data parsing, so I also need to fortify my knowledge on file reading/writing, translating/transforming bytes, and characters. Lastly, the process of updating files/logs to simulate incremental data. The data in a players account is always changing, unless they stop playing of course. There will need to be dynamic implementations in place to make sure a specific players data is updated constantly.
+
+My plan right now is to research the tools i'll need for a game like brawlstars, the databases I can access. The ideal language for what Im trying to build. I've used java the longest, I also used python a bit, and C is my most recent. 
