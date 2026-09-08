@@ -13,7 +13,9 @@ The main practice will involve data parsing, so I also need to fortify my knowle
 
 My plan right now is to research the tools i'll need for a game like brawlstars, the databases I can access. The ideal language for what Im trying to build. I've used java the longest, I also used python a bit, and C is my most recent. 
 
+The users of this software will include regular players, pro players(people who play the game for money), and game analysts/coaches. I hadn't considered the UI interface, so right now I plan to start with terminal UI to make sure all the features I plan to add work, and then I can incorperate it into a fancy UI version. Some of the name ideas for the app are BrawlStatz, BBData, and Project Brawl. 
+
 <Dr. Hubert's comment>
 You need to add more information about what technology you use to build this mobile game and Who are the users.
 
-a195b12ecba056afc034aab5c47b6006106d93c5
+
