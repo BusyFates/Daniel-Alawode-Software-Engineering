@@ -16,7 +16,7 @@ class PlayerProfile:
         self.player_tag = player_tag
         self.name = name
         self.trophies = trophies
-        self.prestige_tier = "Bronze" # Placeholder default initialization
+        self.prestige_tier = "Bronze" # Placeholder default initialization, most players won't be bronze rank
         self.brawlers = []            # Collection for Brawler relationship
         
     def add_brawler(self, brawler):
@@ -95,7 +95,7 @@ class PlayerLookupService:
             
         raw_data = self.api_client.get_player(tag)
         if raw_data:
-            # Map raw dictionary data into your formal object domain entity
+            # Map raw dictionary data into formal object domain entity
             profile = PlayerProfile(
                 player_tag=raw_data.get("tag", tag),
                 name=raw_data.get("name", "Unknown Player"),
@@ -110,7 +110,7 @@ class PlayerLookupService:
 # ==========================================
 
 class BrawlStatzApplication:
-    """Matches the centralized architecture orchestrator."""
+    """Matches the centralized architecture."""
     def __init__(self):
         self.lookup = PlayerLookupService()
 
@@ -159,6 +159,6 @@ class TerminalUI:
 
 
 if __name__ == "__main__":
-    # Bootstraps boundary interface architecture
+    # STARTS boundary interface architecture
     ui = TerminalUI()
     ui.start_interface()
