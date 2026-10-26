@@ -10,7 +10,7 @@ class PlayerProfile:
         self.player_tag = player_tag
         self.name = name
         self.trophies = trophies
-        self.prestige_tier = "Bronze"  # Placeholder kept for code review stability
+        self.prestige_tier = "Bronze"  # Placeholder rank until I figure out how to track current rank.
         
         # New Core Stat Fields for Analytics Computation
         self.total_wins = total_wins
@@ -68,7 +68,7 @@ class StatsComputationEngine:
     def calculate_daily_metrics(self, current_profile: PlayerProfile) -> None:
         """
         Simulates parsing a historical log file to track incremental progress.
-        Takes lifetime win and breaks them down.
+        Takes lifetime wins and breaks them down.
         """
         # MOCK HISTORY DATA FOR TEST LOG: Imagine a log from 7 days ago showed 42 fewer wins
         DAYS_ELAPSED = 7
@@ -80,7 +80,7 @@ class StatsComputationEngine:
         # 2. Average Computation
         current_profile.avg_wins_per_day = round(delta_wins / DAYS_ELAPSED, 2)
         
-        # 3. Loss Telemetry Estimate (Simulated Win-Rate calculations for Pro players)
+        # Will need files to actually calculate past history wins.
         # Assuming an average competitive Win-Rate threshold of 60% for pro practice sets
         estimated_total_games = delta_wins / 0.60
         delta_losses = estimated_total_games - delta_wins
