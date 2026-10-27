@@ -5,18 +5,34 @@ import urllib.error
 
 API_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiIsImtpZCI6IjI4YTMxOGY3LTAwMDAtYTFlYi03ZmExLTJjNzQzM2M2Y2NhNSJ9.eyJpc3MiOiJzdXBlcmNlbGwiLCJhdWQiOiJzdXBlcmNlbGw6Z2FtZWFwaSIsImp0aSI6IjdkMjhhZTY0LWJlMGUtNDJiNS04OTExLTM0ZjU1ZjQ1NmFkZiIsImlhdCI6MTc5MTM4Njc1OSwic3ViIjoiZGV2ZWxvcGVyL2U0YmEwNzIxLWVkMmEtNGY2OS1hYTVkLTM3ZTU3MTU0ZjIzOSIsInNjb3BlcyI6WyJicmF3bHN0YXJzIl0sImxpbWl0cyI6W3sidGllciI6ImRldmVsb3Blci9zaWx2ZXIiLCJ0eXBlIjoidGhyb3R0bGluZyJ9LHsiY2lkcnMiOlsiOTYuMjU1LjEyOC4xNjciXSwidHlwZSI6ImNsaWVudCJ9XX0.OrEwYVzzra_JvFVCZfeZikJHVP1oddvPTBsGVcIiWGp8i-LlAQ0yA3fd82QvcBfYxmK0wHSHJyZZthMUFQq0RA"
 
+# ==========================================
+# 1. CORE DOMAIN MODEL CLASSES
+# ==========================================
+
+class Brawler:
+    """New domain entity representing an individual character record."""
+    def __init__(self, name: str, trophies: int, highest_trophies: int, skins: list):
+        self.name = name
+        self.trophies = trophies
+        self.highest_trophies = highest_trophies
+        self.skins = skins  # List of strings (skin names)
+
 class PlayerProfile:
     def __init__(self, player_tag: str, name: str, trophies: int, total_wins: int):
         self.player_tag = player_tag
         self.name = name
         self.trophies = trophies
-        self.prestige_tier = "Bronze"  # Placeholder rank until I figure out how to track current rank.
-        
-        # New Core Stat Fields for Analytics Computation
+        self.prestige_tier = "Bronze"  # Kept for code review baseline
         self.total_wins = total_wins
         self.avg_wins_per_day = 0.0
         self.estimated_losses_per_day = 0.0
+        
+        # Core Relationship Collection for User Story 3 (0..* Brawlers)
+        self.brawlers = [] 
 
+    def add_brawler(self, brawler_obj: Brawler):
+        """Appends an instantiated character entity to the profile collection."""
+        self.brawlers.append(brawler_obj)
 
 # ==========================================
 # 2. INFRASTRUCTURE & BACKEND CLIENTS
@@ -27,8 +43,7 @@ class HTTPErrorHandler:
         self.last_error = ""
     def handle(self, status_code: int) -> None:
         self.last_error = f"HTTP Error Status: {status_code}"
-        print(f"[Error Code: {status_code}] Communication failed.")
-
+        print(f"[Error Code: {status_code}] Network fault.")
 
 class BrawlStarsAPIClient:
     def __init__(self):
@@ -57,44 +72,28 @@ class BrawlStarsAPIClient:
             print(f"Network system failure: {e}")
             return None
 
-
 # ==========================================
 # 3. STATS ANALYTICS COMPUTATION ENGINE
 # ==========================================
 
 class StatsComputationEngine:
-    """New service block dedicated to executing data analysis on user profiles."""
-    
     def calculate_daily_metrics(self, current_profile: PlayerProfile) -> None:
-        """
-        Simulates parsing a historical log file to track incremental progress.
-        Takes lifetime wins and breaks them down.
-        """
-        # MOCK HISTORY DATA FOR TEST LOG: Imagine a log from 7 days ago showed 42 fewer wins
         DAYS_ELAPSED = 7
         PAST_HISTORICAL_WINS = current_profile.total_wins - 42
-        
-        # 1. Delta Calculation (Current Wins minus Past Wins)
         delta_wins = current_profile.total_wins - PAST_HISTORICAL_WINS
-        
-        # 2. Average Computation
         current_profile.avg_wins_per_day = round(delta_wins / DAYS_ELAPSED, 2)
-        
-        # Will need files to actually calculate past history wins.
-        # Assuming an average competitive Win-Rate threshold of 60% for pro practice sets
         estimated_total_games = delta_wins / 0.60
         delta_losses = estimated_total_games - delta_wins
         current_profile.estimated_losses_per_day = round(delta_losses / DAYS_ELAPSED, 2)
 
-
 # ==========================================
-# 4. UPDATED SERVICE INTERMEDIARY LAYER
+# 4. SERVICE INTERMEDIARY LAYER
 # ==========================================
 
 class PlayerLookupService:
     def __init__(self):
         self.api_client = BrawlStarsAPIClient()
-        self.analytics_engine = StatsComputationEngine() # Injected calculations dependency
+        self.analytics_engine = StatsComputationEngine()
 
     def validate_tag(self, tag: str) -> bool:
         return len(tag.strip()) > 0
@@ -105,7 +104,6 @@ class PlayerLookupService:
             
         raw_data = self.api_client.get_player(tag)
         if raw_data:
-            # Aggregate all 3v3, Solo, and Duo victories from the JSON payload into an absolute win value
             v3_wins = raw_data.get("3vs3Victories", 0)
             solo_wins = raw_data.get("soloVictories", 0)
             duo_wins = raw_data.get("duoVictories", 0)
@@ -118,12 +116,27 @@ class PlayerLookupService:
                 total_wins=calculated_total_wins
             )
             
-            # Run the data computation metrics sequence before returning
+            # Execute analytics math
             self.analytics_engine.calculate_daily_metrics(profile)
             
+            # PARSE THE BRAWLER COLLECTION ARRAY
+            raw_brawlers = raw_data.get("brawlers", [])
+            for b_data in raw_brawlers:
+                # Extract skin sub-array entries
+                raw_skins = b_data.get("skins", [])
+                skin_names = [skin.get("name", "Standard") for skin in raw_skins]
+                
+                # Instantiate domain entity
+                brawler_instance = Brawler(
+                    name=b_data.get("name", "Unknown Brawler"),
+                    trophies=b_data.get("trophies", 0),
+                    highest_trophies=b_data.get("highestTrophies", 0),
+                    skins=skin_names
+                )
+                profile.add_brawler(brawler_instance)
+                
             return profile
         return None
-
 
 # ==========================================
 # 5. ARCHITECTURE CONTROLLER APPLICATION
@@ -136,9 +149,8 @@ class BrawlStatzApplication:
     def run_lookup(self, tag: str) -> PlayerProfile or None:
         return self.lookup.fetch_profile(tag)
 
-
 # ==========================================
-# 6. UPDATED USER INTERFACE BOUNDARY
+# 6. USER INTERFACE BOUNDARY
 # ==========================================
 
 class TerminalUI:
@@ -157,14 +169,27 @@ class TerminalUI:
         print(f" Target Tag:          {p.player_tag}")
         print(f" Player Name:         {p.name}")
         print(f" Total Trophies:      {p.trophies}")
-        print(f" Prestige Tier:      {p.prestige_tier}")
+        print(f" Prestige Tier:       {p.prestige_tier}")
         print("------------------------------------------")
         print("      COMPUTED CORE STATS ANALYTICS       ")
         print("------------------------------------------")
         print(f" Lifetime Tracked Wins: {p.total_wins}")
         print(f" Average Wins / Day:    {p.avg_wins_per_day}")
         print(f" Est. Losses / Day:     {p.estimated_losses_per_day}")
-        print("==========================================")
+        print("------------------------------------------")
+        print(f"      COACHING AUDIT: TOP BRAWLER ROSTER  ")
+        print("------------------------------------------")
+        
+        # SORTING ENGINE: Sort the collection by trophies in descending order
+        sorted_brawlers = sorted(p.brawlers, key=lambda b: b.trophies, reverse=True)
+        
+        # Display the player's top 5 highest brawlers for meta evaluation
+        for index, brawler in enumerate(sorted_brawlers[:5], start=1):
+            print(f" {index}. {brawler.name:<12} | Trophies: {brawler.trophies:<4} | Peak Trophies: {brawler.highest_trophies}")
+            
+        print("------------------------------------------")
+        print(f" Total Unlocked Character Pool: {len(p.brawlers)} brawlers")
+        print("==========================================")  
 
     def start_interface(self):
         print("Initializing BrawlStatz Terminal Interface Engine...")
@@ -175,6 +200,7 @@ class TerminalUI:
         else:
             print("\nLookup action failed.")
 
+       
 
 if __name__ == "__main__":
     ui = TerminalUI()
