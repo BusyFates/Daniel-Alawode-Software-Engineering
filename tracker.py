@@ -4,63 +4,52 @@ import urllib.parse
 import urllib.request
 import urllib.error
 from datetime import datetime
+import streamlit as st
 
 # ==========================================
 # AUTHENTICATION CONFIGURATION MAPPING
 # ==========================================
-# If a classmate does not have an official key, leaving this empty or out-of-date 
-# will trigger the safe multi-device simulation matrix automatically.
-
 API_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiIsImtpZCI6IjI4YTMxOGY3LTAwMDAtYTFlYi03ZmExLTJjNzQzM2M2Y2NhNSJ9.eyJpc3MiOiJzdXBlcmNlbGwiLCJhdWQiOiJzdXBlcmNlbGw6Z2FtZWFwaSIsImp0aSI6IjdkMjhhZTY0LWJlMGUtNDJiNS04OTExLTM0ZjU1ZjQ1NmFkZiIsImlhdCI6MTc5MTM4Njc1OSwic3ViIjoiZGV2ZWxvcGVyL2U0YmEwNzIxLWVkMmEtNGY2OS1hYTVkLTM3ZTU3MTU0ZjIzOSIsInNjb3BlcyI6WyJicmF3bHN0YXJzIl0sImxpbWl0cyI6W3sidGllciI6ImRldmVsb3Blci9zaWx2ZXIiLCJ0eXBlIjoidGhyb3R0bGluZyJ9LHsiY2lkcnMiOlsiOTYuMjU1LjEyOC4xNjciXSwidHlwZSI6ImNsaWVudCJ9XX0.OrEwYVzzra_JvFVCZfeZikJHVP1oddvPTBsGVcIiWGp8i-LlAQ0yA3fd82QvcBfYxmK0wHSHJyZZthMUFQq0RA"
-
 LOG_FILE_PATH = "history_log.txt"
+
+# Set up Streamlit Page Configuration
+st.set_page_config(page_title="BrawlStatz Analytics", page_icon="📊", layout="centered")
 
 # ==========================================
 # 1. CORE DOMAIN MODEL CLASSES
 # ==========================================
 
 class Brawler:
-    """Domain model entity matching the structural UML specification."""
     def __init__(self, name: str, trophies: int, highest_trophies: int):
         self.name = name
         self.trophies = trophies
         self.highest_trophies = highest_trophies
 
 class PlayerProfile:
-    """Central account record holding computed telemetry fields."""
     def __init__(self, player_tag: str, name: str, trophies: int, total_wins: int):
         self.player_tag = player_tag
         self.name = name
         self.trophies = trophies
         self.prestige_tier = "Bronze"  # Kept constant for code review alignment
         self.total_wins = total_wins
-        
-        # Computed metrics processed dynamically by the log engine
         self.avg_wins_per_day = 0.0
         self.estimated_losses_per_day = 0.0
         self.brawlers = []
 
     def add_brawler(self, brawler_obj: Brawler):
-        """Appends an instantiated character entity to the profile collection."""
         self.brawlers.append(brawler_obj)
 
 # ==========================================
-# 2. LOCAL FILE MANAGEMENT SYSTEM (USER STORY 4)
+# 2. LOCAL FILE MANAGEMENT SYSTEM
 # ==========================================
 
 class AppendOnlyLogger:
-    """Manages structural file reading/writing for tracking data history deltas."""
     def __init__(self):
         self.file_path = LOG_FILE_PATH
 
     def get_past_historical_wins(self, tag: str) -> int or None:
-        """
-        Parses the history log file line by line to isolate the target player tag
-        and extract their oldest baseline win data.
-        """
         if not os.path.exists(self.file_path):
             return None
-            
         try:
             with open(self.file_path, "r", encoding="utf-8") as file:
                 for line in file:
@@ -70,36 +59,30 @@ class AppendOnlyLogger:
                         if log_tag == tag:
                             return int(log_wins)
         except Exception as e:
-            print(f"[File Engine Error] Failed to read character stream: {e}")
+            st.error(f"[File Engine Error] Failed to read history: {e}")
             return None
         return None
 
     def record_current_snapshot(self, tag: str, current_wins: int) -> None:
-        """
-        Appends a fresh comma-separated telemetry line onto the end of the 
-        local text file to track incremental progress updates over time.
-        """
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         try:
             with open(self.file_path, "a", encoding="utf-8") as file:
                 file.write(f"{tag},{timestamp},{current_wins}\n")
         except Exception as e:
-            print(f"[File Engine Error] Failed to append status log entry: {e}")
+            st.error(f"[File Engine Error] Failed to append log entry: {e}")
 
 # ==========================================
 # 3. NETWORK API CLIENT & TOKEN GATEWAY
 # ==========================================
 
 class BrawlStarsAPIClient:
-    """Coordinates direct server querying or dynamic fallback routing."""
     def __init__(self):
         self.base_url = "https://api.brawlstars.com/v1/players/"
         self.auth_header = f"Bearer {API_TOKEN}"
 
     def get_player(self, tag: str) -> dict or None:
-        """Executes the external network request pipeline or drops to simulation mode."""
         if "YOUR_BRAWL_STARS_API_TOKEN_HERE" in self.auth_header or len(API_TOKEN) < 20:
-            print("\n[Security Core] Missing or empty token format. Sourcing from local simulation matrix...")
+            st.warning("⚠️ Missing or empty token format. Sourcing from local simulation matrix...")
             return None
 
         cleaned_tag = tag.strip().lstrip('#').upper()
@@ -113,16 +96,14 @@ class BrawlStarsAPIClient:
         request = urllib.request.Request(url, headers=headers)
         
         try:
-            with urllib.request.urlopen(request, timeout=15) as response:
-                raw_bytes = response.read()
-                return json.loads(raw_bytes.decode('utf-8'))
+            with urllib.request.urlopen(request, timeout=3) as response:
+                return json.loads(response.read().decode('utf-8'))
         except urllib.error.HTTPError as e:
             if e.code == 403:
-                print("\n[Security Core] API Authorization Rejected (403: IP Restriction Lockout).")
-                print(" -> Engaging portable local mock simulation layer for reviewer usability.")
+                st.warning("🔒 API Authorization Rejected (403: IP Restriction Lockout). Engaging simulation mode.")
             return None
         except Exception:
-            print("\n[Network Core] Upstream data gateway timed out. Engaging simulation mode.")
+            st.warning("📡 Upstream data gateway timed out. Engaging simulation mode.")
             return None
 
 # ==========================================
@@ -130,16 +111,14 @@ class BrawlStarsAPIClient:
 # ==========================================
 
 class PlayerLookupService:
-    """Glues together the extraction components, computational tracking, and log records."""
     def __init__(self):
         self.api_client = BrawlStarsAPIClient()
         self.file_logger = AppendOnlyLogger()
 
     def get_mock_payload(self, tag: str) -> dict:
-        """Provides a template payload for multi-device compatibility."""
-        return {
+        mock_data = {
             "tag": f"#{tag.strip().lstrip('#').upper()}",
-            "name": "SaintBusy_Mock",
+            "name": "✨☀️SaintBusy☀️✨",
             "trophies": 94100,
             "3vs3Victories": 12500,
             "soloVictories": 2500,
@@ -150,18 +129,29 @@ class PlayerLookupService:
                 {"name": "MINA", "trophies": 2192, "highestTrophies": 2196},
                 {"name": "KAZE", "trophies": 2160, "highestTrophies": 2196},
                 {"name": "GRIFF", "trophies": 2127, "highestTrophies": 2157},
-                {"name": "SHELLY", "trophies": 1105, "highestTrophies": 1133}
+                {"name": "SHELLY", "trophies": 1105, "highestTrophies": 1133},
+                {"name": "COLT", "trophies": 1521, "highestTrophies": 1521},
+                {"name": "BULL", "trophies": 1057, "highestTrophies": 1239},
+                {"name": "BROCK", "trophies": 1190, "highestTrophies": 1196},
+                {"name": "RICO", "trophies": 1151, "highestTrophies": 1151},
+                {"name": "SPIKE", "trophies": 1544, "highestTrophies": 1553}
             ]
         }
+        current_brawler_count = len(mock_data["brawlers"])
+        missing_brawlers_needed = 107 - current_brawler_count
+        for i in range(missing_brawlers_needed):
+            mock_data["brawlers"].append({
+                "name": f"Brawler_{i+1+current_brawler_count}",
+                "trophies": 750,
+                "highestTrophies": 800
+            })
+        return mock_data
 
     def fetch_profile(self, tag: str) -> PlayerProfile or None:
         if not tag.strip():
             return None
             
-        # Try live query first
         raw_data = self.api_client.get_player(tag)
-        
-        # Portability Check: Fall back safely if the connection can't resolve
         if not raw_data:
             raw_data = self.get_mock_payload(tag)
             
@@ -178,96 +168,72 @@ class PlayerLookupService:
             total_wins=current_wins
         )
         
-        # ---- USER STORY 4: RECONCILE DATA FROM LOCAL FILE LOGGING ----
         past_wins = self.file_logger.get_past_historical_wins(normalized_tag)
-        
         if past_wins is not None:
-            # If historical points are found, compute actual delta stats
-            DAYS_ELAPSED = 5  # Simulated tracking window matrix block
+            DAYS_ELAPSED = 5
             win_delta = current_wins - past_wins
             profile.avg_wins_per_day = round(win_delta / DAYS_ELAPSED, 2)
             profile.estimated_losses_per_day = round((win_delta / 0.60) - win_delta / DAYS_ELAPSED, 2)
-        else:
-            # Initial launch defaults if no log file matches this player tag yet
-            profile.avg_wins_per_day = 0.0
-            profile.estimated_losses_per_day = 0.0
             
-        # Write the fresh status update out to the log file
         self.file_logger.record_current_snapshot(normalized_tag, current_wins)
         
-        # Populate brawler data collections
         for b_data in raw_data.get("brawlers", []):
             profile.add_brawler(Brawler(
                 name=b_data.get("name", "Unknown"),
                 trophies=b_data.get("trophies", 0),
                 highest_trophies=b_data.get("highestTrophies", 0)
             ))
-            
         return profile
 
 # ==========================================
-# 5. ARCHITECTURE APPLICATION CONTROLLER
+# 5. STREAMLIT WEB APP FRONTEND BOUNDARY
 # ==========================================
 
-class BrawlStatzApplication:
-    def __init__(self):
-        self.lookup = PlayerLookupService()
+st.title("📊 BrawlStatz Performance Analytics")
+st.write("Look up profile statistics, audit character pools, and calculate daily practice efficiency.")
 
-    def run_lookup(self, tag: str) -> PlayerProfile or None:
-        return self.lookup.fetch_profile(tag)
+# Create input field for the player tag
+player_tag_input = st.text_input("Enter target Brawl Stars Player Tag:", placeholder="e.g., 2J0YV80QU")
 
-# ==========================================
-# 6. USER INTERFACE BOUNDARY
-# ==========================================
-
-class TerminalUI:
-    def __init__(self):
-        self.player_tag = ""
-        self.app = BrawlStatzApplication()
-
-    def prompt_for_tag(self) -> str:
-        self.player_tag = input("Enter target Brawl Stars Player Tag: ")
-        return self.player_tag
-
-    def display_profile(self, p: PlayerProfile) -> None:
-        print("\n==========================================")
-        print("      BRAWLSTATZ TERMINAL PROFILE LOOKUP  ")
-        print("==========================================")
-        print(f" Target Tag:          {p.player_tag}")
-        print(f" Player Name:         {p.name}")
-        print(f" Total Trophies:      {p.trophies}")
-        print(f" Prestige Tier:       {p.prestige_tier}")
-        print("------------------------------------------")
-        print("      COMPUTED CORE STATS ANALYTICS       ")
-        print("------------------------------------------")
-        print(f" Lifetime Tracked Wins: {p.total_wins}")
-        print(f" Average Wins / Day:    {p.avg_wins_per_day}")
-        print(f" Est. Losses / Day:     {p.estimated_losses_per_day}")
-     
-        print("------------------------------------------")
-        print(f"      COACHING AUDIT: TOP BRAWLER ROSTER  ")
-        print("------------------------------------------")
-
-        # Sort the character collection list metrics by trophies in descending order
-        sorted_brawlers = sorted(p.brawlers, key=lambda b: b.trophies, reverse=True)
-
-        # Loop to display the top 5 performers
-        for index, brawler in enumerate(sorted_brawlers[:5], start=1):
-            print(f" {index}. {brawler.name:<12} | Trophies: {brawler.trophies:<4} | Peak Trophies: {brawler.highest_trophies}")
-        print("------------------------------------------")
-        print(f" Total Unlocked Character Pool: {len(p.brawlers)} brawlers")
-        print(f" Log Storage Database File: '{LOG_FILE_PATH}'")
-        print("==========================================")
-
-    def start_interface(self):
-        print("Initializing BrawlStatz Terminal Interface Engine...")
-        tag = self.prompt_for_tag()
-        profile_result = self.app.run_lookup(tag)
-        if profile_result:
-            self.display_profile(profile_result)
+if st.button("Run Analytics Dashboard", type="primary"):
+    if player_tag_input:
+        service = PlayerLookupService()
+        with st.spinner("Parsing server database records..."):
+            p = service.fetch_profile(player_tag_input)
+            
+        if p:
+            st.success(f"Successfully processed profile for {p.name}!")
+            
+            # Overview Metrics Layout Grid
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Player Name", p.name)
+            col2.metric("Total Trophies", f"{p.trophies:,}")
+            col3.metric("Prestige Tier", p.prestige_tier)
+            
+            # Core Performance Metrics Log Grid
+            st.markdown("### 📈 Computed Practice Efficiency Metrics")
+            col_a, col_b, col_c = st.columns(3)
+            col_a.metric("Lifetime Tracked Wins", f"{p.total_wins:,}")
+            col_b.metric("Avg Wins / Day", p.avg_wins_per_day)
+            col_c.metric("Est. Losses / Day", p.estimated_losses_per_day)
+            
+            # Coaching Audit Roster Grid
+            st.markdown("### 🏆 Coaching Audit: Top Brawler Roster")
+            sorted_brawlers = sorted(p.brawlers, key=lambda b: b.trophies, reverse=True)
+            
+            # Format top 5 brawlers into a beautiful visual table layout
+            table_data = []
+            for index, brawler in enumerate(sorted_brawlers[:5], start=1):
+                table_data.append({
+                    "Rank": index,
+                    "Brawler Name": brawler.name,
+                    "Current Trophies": brawler.trophies,
+                    "Peak Trophies": brawler.highest_trophies
+                })
+            st.table(table_data)
+            
+            st.info(f"💡 Total Unlocked Character Pool: **{len(p.brawlers)} brawlers** | Tracking log active in `{LOG_FILE_PATH}`")
         else:
-            print("\nLookup action failed.")
-
-if __name__ == "__main__":
-    ui = TerminalUI()
-    ui.start_interface()
+            st.error("System Error: Unable to assemble data profile for the provided tag.")
+    else:
+        st.warning("Please type in a player tag before running.")
