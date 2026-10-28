@@ -9,7 +9,7 @@ This application requires absolutely no code installation, no computer terminal 
 
 To launch the dashboard instantly from any computer, phone, or tablet device, simply click the public link below:
 
-👉 **[Launch BrawlStatz Live Web App](https://daniel-alawode-software-engineering-frrkvumphjmbiiwg8tzn64.streamlit.app/)**
+👉 **[Launch BrawlStatz Live Web App](daniel-alawode-software-engineering-dm2h2tqg5gwzioxebgjwiv.streamlit.app)**
 
 ---
 
