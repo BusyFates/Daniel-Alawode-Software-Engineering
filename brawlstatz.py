@@ -31,7 +31,7 @@ class PlayerProfile:
 
 class BrawlStarsAPIClient:
     def __init__(self):
-        self.base_url = "https://brawlstars.com"
+        self.base_url = "https://api.brawlstars.com/v1/players/"
         self.auth_header = f"Bearer {API_TOKEN}"
 
     def get_player(self, tag: str) -> dict:
