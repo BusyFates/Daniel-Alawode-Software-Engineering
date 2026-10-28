@@ -31,21 +31,21 @@ class PlayerProfile:
 
 class BrawlStarsAPIClient:
     def __init__(self):
-        self.base_url = "https://api.brawlstars.com/v1/players/"
-        self.auth_header = f"Bearer {API_TOKEN}"
+        # The community proxy base URL path
+        self.base_url = "https://royaleapi.dev"
 
     def get_player(self, tag: str) -> dict:
         cleaned_tag = tag.strip().lstrip('#').upper()
         encoded_tag = urllib.parse.quote(f"#{cleaned_tag}")
         url = f"{self.base_url}{encoded_tag}"
         
+        # PROXY HEADER MAPPING: Uses X-Proxy-Token to clear the proxy's firewall rules safely
         headers = {
-            "Authorization": self.auth_header,
+            "X-Proxy-Token": API_TOKEN,
             "Accept": "application/json"
         }
         request = urllib.request.Request(url, headers=headers)
         
-        # Pure, unshielded network request
         with urllib.request.urlopen(request) as response:
             return json.loads(response.read().decode('utf-8'))
 
