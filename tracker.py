@@ -77,12 +77,12 @@ class AppendOnlyLogger:
 
 class BrawlStarsAPIClient:
     def __init__(self):
-        self.base_url = "https://api.brawlstars.com/v1/players/"
+        self.base_url = "https://royaleapi.dev"
         self.auth_header = f"Bearer {API_TOKEN}"
 
     def get_player(self, tag: str) -> dict or None:
         if "YOUR_BRAWL_STARS_API_TOKEN_HERE" in self.auth_header or len(API_TOKEN) < 20:
-            st.warning("⚠️ Missing or empty token format. Sourcing from local simulation matrix...")
+            st.warning("Missing or empty token format. Sourcing from local simulation matrix...")
             return None
 
         cleaned_tag = tag.strip().lstrip('#').upper()
@@ -100,10 +100,10 @@ class BrawlStarsAPIClient:
                 return json.loads(response.read().decode('utf-8'))
         except urllib.error.HTTPError as e:
             if e.code == 403:
-                st.warning("🔒 API Authorization Rejected (403: IP Restriction Lockout). Engaging simulation mode.")
+                st.warning("API Authorization Rejected (403: IP Restriction Lockout). Engaging simulation mode.")
             return None
         except Exception:
-            st.warning("📡 Upstream data gateway timed out. Engaging simulation mode.")
+            st.warning("Upstream data gateway timed out. Engaging simulation mode.")
             return None
 
 # ==========================================
@@ -218,7 +218,7 @@ if st.button("Run Analytics Dashboard", type="primary"):
             col_c.metric("Est. Losses / Day", p.estimated_losses_per_day)
             
             # Coaching Audit Roster Grid
-            st.markdown("### 🏆 Coaching Audit: Top Brawler Roster")
+            st.markdown("### Coaching Audit: Top Brawler Roster")
             sorted_brawlers = sorted(p.brawlers, key=lambda b: b.trophies, reverse=True)
             
             # Format top 5 brawlers into a beautiful visual table layout
@@ -232,7 +232,7 @@ if st.button("Run Analytics Dashboard", type="primary"):
                 })
             st.table(table_data)
             
-            st.info(f"💡 Total Unlocked Character Pool: **{len(p.brawlers)} brawlers** | Tracking log active in `{LOG_FILE_PATH}`")
+            st.info(f" Total Unlocked Character Pool: **{len(p.brawlers)} brawlers** | Tracking log active in `{LOG_FILE_PATH}`")
         else:
             st.error("System Error: Unable to assemble data profile for the provided tag.")
     else:
