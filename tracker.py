@@ -96,7 +96,7 @@ class BrawlStarsAPIClient:
         request = urllib.request.Request(url, headers=headers)
         
         try:
-            with urllib.request.urlopen(request, timeout=3) as response:
+            with urllib.request.urlopen(request, timeout=5) as response:
                 return json.loads(response.read().decode('utf-8'))
         except urllib.error.HTTPError as e:
             if e.code == 403:
