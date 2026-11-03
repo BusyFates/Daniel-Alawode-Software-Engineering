@@ -8,7 +8,7 @@ from datetime import datetime
 # ==========================================
 # AUTHENTICATION CONFIGURATION
 # ==========================================
-# Set this to your active developer token string.
+
 API_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiIsImtpZCI6IjI4YTMxOGY3LTAwMDAtYTFlYi03ZmExLTJjNzQzM2M2Y2NhNSJ9.eyJpc3MiOiJzdXBlcmNlbGwiLCJhdWQiOiJzdXBlcmNlbGw6Z2FtZWFwaSIsImp0aSI6IjdkMjhhZTY0LWJlMGUtNDJiNS04OTExLTM0ZjU1ZjQ1NmFkZiIsImlhdCI6MTc5MTM4Njc1OSwic3ViIjoiZGV2ZWxvcGVyL2U0YmEwNzIxLWVkMmEtNGY2OS1hYTVkLTM3ZTU3MTU0ZjIzOSIsInNjb3BlcyI6WyJicmF3bHN0YXJzIl0sImxpbWl0cyI6W3sidGllciI6ImRldmVsb3Blci9zaWx2ZXIiLCJ0eXBlIjoidGhyb3R0bGluZyJ9LHsiY2lkcnMiOlsiOTYuMjU1LjEyOC4xNjciXSwidHlwZSI6ImNsaWVudCJ9XX0.OrEwYVzzra_JvFVCZfeZikJHVP1oddvPTBsGVcIiWGp8i-LlAQ0yA3fd82QvcBfYxmK0wHSHJyZZthMUFQq0RA"
 LOG_FILE_PATH = "history_log.txt"
 
@@ -17,14 +17,14 @@ LOG_FILE_PATH = "history_log.txt"
 # ==========================================
 
 class Brawler:
-    """Domain model entity representing an individual character record."""
+    """Domain model representing an individual character record."""
     def __init__(self, name: str, trophies: int, highest_trophies: int):
         self.name = name
         self.trophies = trophies
         self.highest_trophies = highest_trophies
 
 class PlayerProfile:
-    """Central account record holding computed telemetry and identity fields."""
+    """Central account record holding computed identity stats."""
     def __init__(self, player_tag: str, name: str, trophies: int, total_wins: int):
         self.player_tag = player_tag
         self.name = name
@@ -32,13 +32,13 @@ class PlayerProfile:
         self.prestige_tier = "Masters" if trophies >= 90000 else "Bronze"
         self.total_wins = total_wins
         
-        # Incremental metrics calculated dynamically via local tracking engine
+        # Incremental metrics calculated dynamically
         self.avg_wins_per_day = 0.0
         self.estimated_losses_per_day = 0.0
         self.brawlers = []
 
     def add_brawler(self, brawler_obj: Brawler):
-        """Appends an instantiated character entity to the profile collection."""
+        """Appends a character entity to the profile collection."""
         self.brawlers.append(brawler_obj)
 
 # ==========================================
@@ -67,7 +67,7 @@ class AppendOnlyLogger:
         return None
 
     def record_current_snapshot(self, tag: str, current_wins: int) -> None:
-        """Appends a fresh telemetry line onto the end of the local text log."""
+        """Appends a fresh line onto the end of the local text log."""
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         try:
             with open(self.file_path, "a", encoding="utf-8") as file:
@@ -80,7 +80,7 @@ class AppendOnlyLogger:
 # ==========================================
 
 class BrawlStarsAPIClient:
-    """Coordinates direct server querying to Supercell endpoints."""
+    """ This Coordinates direct server querying to Supercell endpoints."""
     def __init__(self):
         self.base_url = "https://api.brawlstars.com/v1/players/"
         self.auth_header = f"Bearer {API_TOKEN}"
@@ -126,7 +126,7 @@ class PlayerLookupService:
             total_wins=current_wins
         )
         
-        # Process delta math metrics from history text file snapshots
+        # Process math metrics from history text file 
         past_wins = self.file_logger.get_past_historical_wins(normalized_tag)
         if past_wins is not None:
             DAYS_ELAPSED = 5
@@ -134,7 +134,7 @@ class PlayerLookupService:
             profile.avg_wins_per_day = round(win_delta / DAYS_ELAPSED, 2)
             profile.estimated_losses_per_day = round((win_delta / 0.60) - win_delta / DAYS_ELAPSED, 2)
             
-        # Append runtime metrics out to text storage logging file
+        # Append metrics out to text storage logging file
         self.file_logger.record_current_snapshot(normalized_tag, current_wins)
         
         # Populate operational brawler collection arrays
